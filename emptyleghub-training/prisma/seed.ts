@@ -505,22 +505,19 @@ async function main() {
     }
   ]
 
+  // Clear existing data
+  await prisma.answer.deleteMany()
+  await prisma.quizAttempt.deleteMany()
+  await prisma.progress.deleteMany()
+  await prisma.question.deleteMany()
+  await prisma.trainingModule.deleteMany()
+
   // Create modules with questions
   for (const moduleData of modules) {
     const { questions, ...moduleInfo } = moduleData
     
-    await prisma.trainingModule.upsert({
-      where: { 
-        title: moduleInfo.title 
-      },
-      update: {
-        ...moduleInfo,
-        questions: {
-          deleteMany: {},
-          create: questions
-        }
-      },
-      create: {
+    await prisma.trainingModule.create({
+      data: {
         ...moduleInfo,
         questions: {
           create: questions
