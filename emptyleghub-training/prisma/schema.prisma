@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  progress  Progress[]
+  attempts  QuizAttempt[]
+}
+
+model TrainingModule {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  content     String   // JSON string containing module content
+  order       Int
+  duration    Int      // Estimated time in minutes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  questions   Question[]
+  progress    Progress[]
+  attempts    QuizAttempt[]
+}
+
+model Question {
+  id         String   @id @default(cuid())
+  moduleId   String
+  module     TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  question   String
+  options    String   // JSON array of options
+  correct    Int      // Index of correct option
+  order      Int
+  createdAt  DateTime @default(now())
+  
+  answers    Answer[]
+}
+
+model Progress {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleId   String
+  module     TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  completed  Boolean  @default(false)
+  score      Float?   // Quiz score percentage
+  startedAt  DateTime @default(now())
+  completedAt DateTime?
+  
+  @@unique([userId, moduleId])
+}
+
+model QuizAttempt {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleId   String
+  module     TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  score      Float
+  passed     Boolean
+  startedAt  DateTime @default(now())
+  completedAt DateTime
+  
+  answers    Answer[]
+}
+
+model Answer {
+  id          String   @id @default(cuid())
+  attemptId   String
+  attempt     QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selected    Int      // Index of selected option
+  correct     Boolean
+  createdAt   DateTime @default(now())
+}
